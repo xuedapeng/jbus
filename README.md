@@ -1,8 +1,8 @@
 # jbus
-java tcp service for modbus/iot based on netty 
+java tcp transparent transmision service for modbus/iot based on netty 
 
 
 ## roadmap
-* server container like tomcat
-* persistence support for sql and nosql（mysql & mongodb）
-* simple http service for server status info，websocket for simple pub／sub service
+* 接入身份验证
+* 与mqtt服务交互
+* 协议适配
