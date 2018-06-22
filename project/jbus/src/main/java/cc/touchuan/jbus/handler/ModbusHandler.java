@@ -36,7 +36,7 @@ public class ModbusHandler extends ChannelInboundHandlerAdapter {
 		// 透传
 		String sessionId = ctx.channel().attr(Keys.SESSION_ID_KEY).get();
 		DeviceProxy proxy = DeviceProxyManager.findProxy(sessionId);
-		proxy.sendToCtrl(data);
+		proxy.sendData(data);
 		
 	} 
 	

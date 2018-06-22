@@ -3,6 +3,8 @@ package cc.touchuan.jbus.proxy;
 import org.apache.log4j.Logger;
 
 import cc.touchuan.jbus.common.helper.HexHelper;
+import cc.touchuan.jbus.session.Session;
+import cc.touchuan.jbus.session.SessionManager;
 
 
 public class DeviceProxy {
@@ -11,25 +13,32 @@ public class DeviceProxy {
 	
 	private String sessionId;
 	private String deviceId;
-	private String host;
-	private int port;
 	
 
 	public DeviceProxy(String sessionId, String host, int port) {
 		this.sessionId = sessionId;
-		this.host = host;
-		this.port = port;
 		this.deviceId = makeDeviceId(host, port);
 
-		this.connectCtrl();
+		// device create event
+		SessionManager.deviceIdCreateEvent(sessionId, deviceId);
+		
+		// 创建控制器
+		this.createOrUpdateController();
 	}
 
 	public void updateDeviceId(String deviceId) {
+		
+		String oldDeviceId = this.deviceId;
 		this.deviceId = deviceId;
-		this.connectCtrl();
+
+		// device create event
+		SessionManager.deviceIdUpdateEvent(sessionId, oldDeviceId, deviceId);
+
+		// 更新控制器
+		this.createOrUpdateController();
 	}
 	
-	protected void connectCtrl() {
+	private void createOrUpdateController() {
 		
 		ControllerProxy cproxy = ControllerProxyManager.findProxy(sessionId);
 		if (cproxy == null) {
@@ -43,48 +52,23 @@ public class DeviceProxy {
 	}
 	
 
-	public void sendToCtrl(byte[] data) {
+	public void sendData(byte[] data) {
 
+		Session session = SessionManager.findBySessionId(this.sessionId);
+		session.getControllerProxy().recieveData(data);
+		
 		logger.info("sendData:" + HexHelper.bytesToHexString(data));
-		
-		
-		
 	}
 	
-	public void recieveFromCtrl(byte[] data) {
-		
+	public void recieveCommand(byte[] command) {
+
+		Session session = SessionManager.findBySessionId(this.sessionId);
+		session.getChannel().writeAndFlush(command);
 	}
-	
-	
-//	public String getSessionId() {
-//		return sessionId;
-//	}
-//
-//	public void setSessionId(String sessionId) {
-//		this.sessionId = sessionId;
-//	}
-//
-//	public String getDeviceId() {
-//		return deviceId;
-//	}
-//
-//
-//	public String getHost() {
-//		return host;
-//	}
-//
-//	public void setHost(String host) {
-//		this.host = host;
-//	}
-//
-//	public int getPort() {
-//		return port;
-//	}
-//
-//	public void setPort(int port) {
-//		this.port = port;
-//	}
-	
+
+	public String getDeviceId() {
+		return deviceId;
+	}
 
 	private static String makeDeviceId(String host, int port) {
 		

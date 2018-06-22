@@ -1,7 +1,15 @@
 package cc.touchuan.jbus.proxy;
 
+import org.apache.log4j.Logger;
+
+import cc.touchuan.jbus.common.helper.HexHelper;
+import cc.touchuan.jbus.session.Session;
+import cc.touchuan.jbus.session.SessionManager;
+
 public class ControllerProxy {
 
+	static Logger logger = Logger.getLogger(ControllerProxy.class);
+	
 	private String deviceId;
 	private String sessionId;
 
@@ -10,33 +18,41 @@ public class ControllerProxy {
 		this.sessionId = sessionId;
 		this.deviceId = deviceId;
 		
-		subscribe(deviceId);
+		MqttProxy.subscribe(deviceId);
 		
 	}
 
 	public void updateDeviceId(String deviceId) {
 
-		unSubscribe(this.deviceId);
+		String oldDevice = this.deviceId;
 		
 		this.deviceId = deviceId;
-		
-		subscribe(this.deviceId);
+
+		MqttProxy.unSubscribe(oldDevice);
+		MqttProxy.subscribe(this.deviceId);
 
 		
 	}
 	
-	public void close() {
-		unSubscribe(this.deviceId);
-	}
-	
-	
-	private static  void subscribe(String deviceId) {
+
+	// 向device下发命令
+	public void sendCommand(byte[] command) {
+
+		Session session = SessionManager.findBySessionId(this.sessionId);
+		session.getDeviceProxy().recieveCommand(command);
 		
+		logger.info("sendCommand:" + HexHelper.bytesToHexString(command));
+
 	}
 	
-	private static  void unSubscribe(String deviceId) {
+	public void recieveData(byte[] data) {
 		
+		MqttProxy.publish(deviceId, data);
+
+		logger.info("recieveData:" + HexHelper.bytesToHexString(data));
 	}
+
+	
 	
 	
 	

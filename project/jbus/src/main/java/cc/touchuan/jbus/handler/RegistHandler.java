@@ -80,7 +80,7 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 		}
 
 		// session,proxy管理
-		Session session = SessionManager.createSession(ctx.channel());
+		Session session = SessionManager.createSession(ctx.channel(), host, port);
 		DeviceProxyManager.createProxy(session.getSessionId(), host, port);
 		
 		return REG_STATUS.OK;
@@ -125,7 +125,7 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 		if (sessionId == null) {
 			throw new JbusException("fail to find session of channel.");
 		}
-		Session session = SessionManager.findSession(sessionId);
+		Session session = SessionManager.findBySessionId(sessionId);
 		if (session == null) {
 			throw new JbusException("fail to find session by sessionId");
 		}
@@ -146,7 +146,7 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 		ctx.channel().writeAndFlush(ByteHelper.str2bb(outMsg));
 		ctx.close();
 		
-		// 销毁资源
+		// 释放资源
 		SessionManager.closeSession(ctx.channel().attr(Keys.SESSION_ID_KEY).get());
 	}
 	
