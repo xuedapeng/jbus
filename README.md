@@ -10,3 +10,8 @@
 * 服务器状态监视接口：json-rpc
 * 网关模拟器：jbus-sim device
 * 控制模拟器：jbus-sim ctrl
+
+## 参考文档
+    
+   * [一种同时支持云端和现地两种运维模式的物联网通讯架构](https://github.com/xuedapeng/jbus/wiki/一种同时支持云端和现地两种运维模式的物联网通讯架构)
+
