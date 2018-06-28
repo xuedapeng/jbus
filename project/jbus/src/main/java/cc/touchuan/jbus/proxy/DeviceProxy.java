@@ -2,10 +2,11 @@ package cc.touchuan.jbus.proxy;
 
 import org.apache.log4j.Logger;
 
+import cc.touchuan.jbus.common.helper.ByteHelper;
 import cc.touchuan.jbus.common.helper.HexHelper;
 import cc.touchuan.jbus.session.Session;
 import cc.touchuan.jbus.session.SessionManager;
-
+import io.netty.channel.Channel;
 
 public class DeviceProxy {
 
@@ -13,7 +14,6 @@ public class DeviceProxy {
 	
 	private String sessionId;
 	private String deviceId;
-	
 
 	public DeviceProxy(String sessionId, String host, int port) {
 		this.sessionId = sessionId;
@@ -54,16 +54,25 @@ public class DeviceProxy {
 
 	public void sendData(byte[] data) {
 
+		logger.info("sendData:" + HexHelper.bytesToHexString(data));
+		
 		Session session = SessionManager.findBySessionId(this.sessionId);
 		session.getControllerProxy().recieveData(data);
 		
-		logger.info("sendData:" + HexHelper.bytesToHexString(data));
+		Channel channel = session.getChannel();
+		logger.info("channel.isWritable=" + channel.isWritable());
+		
 	}
 	
 	public void recieveCommand(byte[] command) {
 
+		logger.info("recieveCommand:" + HexHelper.bytesToHexString(command));
+		
 		Session session = SessionManager.findBySessionId(this.sessionId);
-		session.getChannel().writeAndFlush(command);
+		Channel channel = session.getChannel();
+		
+		logger.info("channel.isWritable=" + channel.isWritable());
+		channel.writeAndFlush(ByteHelper.bytes2bb(command));
 	}
 
 	public String getDeviceId() {

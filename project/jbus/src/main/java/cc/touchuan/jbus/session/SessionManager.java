@@ -1,5 +1,6 @@
 package cc.touchuan.jbus.session;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -74,16 +75,22 @@ public class SessionManager {
 		Session session = findBySessionId(sessionId);
 		
 		List<Session> sessionList = _device2SessionMap.get(oldDeviceId);
-		sessionList.remove(session);
+		if (sessionList != null) {
+			sessionList.remove(session);
+		}
 		
-		sessionList = _device2SessionMap.get(newDeviceId);
-		sessionList.add(session);
+		deviceIdCreateEvent(sessionId, newDeviceId);
 	}
 	
 	public static void deviceIdCreateEvent(String sessionId, String deviceId) {
 
 		Session session = findBySessionId(sessionId);
 
+		if (!_device2SessionMap.containsKey(deviceId)) {
+			_device2SessionMap.put(deviceId, new ArrayList<Session>());
+		}
+		
+		
 		List<Session> sessionList = _device2SessionMap.get(deviceId);
 		sessionList.add(session);
 		

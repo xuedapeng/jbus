@@ -48,8 +48,13 @@ public class MqttPool {
 	static MqttConnectOptions _connOpts = new MqttConnectOptions(); 
 	
 	// 初始创建10个连接
-	static {
-         
+	public static void initialize() {
+		initPool();
+		checkLostTask();
+	}
+	
+	private static void initPool() {
+
 		_connOpts.setCleanSession(true);  
 		_connOpts.setUserName(USERNAME);  
 		_connOpts.setPassword(PASSWORD.toCharArray());  
@@ -62,6 +67,8 @@ public class MqttPool {
 					_mqttClientList.add(client);
 					_clientId2MqttClient.put(client.getClientId(), client);
 					_clientId2Count.put(client.getClientId(), 0);
+					
+					logger.info("MqttClient created. clientId=" + client.getClientId());
 			}
 			
 		} catch (MqttException e) {
@@ -72,7 +79,7 @@ public class MqttPool {
 	}
 	
 	// 重连线程
-	static {
+	private static void checkLostTask() {
 		
 		new Thread() {
 
@@ -81,40 +88,59 @@ public class MqttPool {
 				
 				while(true) {
 
+					logger.info("before: lost.size=" + _mqttClientDisconnectedList.size());
+					
+					if (_mqttClientDisconnectedList.size() > 0) {
+						reconnect();
+					}
+
+					logger.info("after: lost.size=" + _mqttClientDisconnectedList.size());
+					
 					try {
 						sleep(IDLE_SLEEP);
 					} catch (InterruptedException e) {
 						logger.error("", e);
 					}
-					
-					if (_mqttClientDisconnectedList.size() == 0) {
-						break;
-					}
-					
-					List<MqttClient> successList = new ArrayList<MqttClient>();
-					
-					// 重连接
-					_mqttClientDisconnectedList.forEach((E)->{
-						try {
-							E.connect(_connOpts);
-							successList.add(E);
-						} catch (MqttException e) {
-							logger.error("", e);
-							throw new JbusException(e);
-						}
-					});
-					
-					// 从失连列表中删除重连成功的对象
-					successList.forEach((E)->{
-						_mqttClientDisconnectedList.remove(E);
-					});
-					
 				}
 			}
 			
 		}.start();
 	}
 	
+	private static synchronized void reconnect() {
+
+		List<MqttClient> successList = new ArrayList<MqttClient>();
+		
+		// 重连接
+		_mqttClientDisconnectedList.forEach((E)->{
+			try {
+				if (!E.isConnected()) {
+					E.connect(_connOpts);
+					logger.info("reconnected. client=" + E.getClientId());
+				}
+				successList.add(E);
+			} catch (MqttException e) {
+				logger.error("", e);
+			}
+		});
+		
+		// 从失连列表中删除重连成功的对象
+		successList.forEach((E)->{
+			_mqttClientDisconnectedList.remove(E);
+		});
+		
+		// 全面检查
+		_mqttClientList.forEach((E)->{
+
+			if (!E.isConnected()) {
+				if (!_mqttClientDisconnectedList.contains(E)) {
+					_mqttClientDisconnectedList.add(E);
+				}
+			}
+		});
+
+		
+	}
 	
 	public static MqttClient getInstance(String deviceId) {
 		
@@ -157,6 +183,8 @@ public class MqttPool {
 
 			@Override
 			public void connectionLost(Throwable cause) {
+				
+				logger.info("", cause);
 				// 重连
 				if (!_mqttClientDisconnectedList.contains(mqttClient)) {
 					_mqttClientDisconnectedList.add(mqttClient);

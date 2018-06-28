@@ -46,10 +46,11 @@ public class ControllerProxy {
 	}
 	
 	public void recieveData(byte[] data) {
+
+		logger.info("recieveData:" + HexHelper.bytesToHexString(data));
 		
 		MqttProxy.publish(deviceId, data);
 
-		logger.info("recieveData:" + HexHelper.bytesToHexString(data));
 	}
 
 	

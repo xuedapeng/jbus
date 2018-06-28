@@ -18,6 +18,11 @@ public class ByteHelper {
 		return bytes;
 	}
 	
+	public static ByteBuf bytes2bb(byte[] b) {
+		return Unpooled.copiedBuffer(b);
+		
+	}
+	
 
 	// string to ByteBuf
 	public static ByteBuf str2bb(String str) {

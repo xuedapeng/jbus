@@ -1,21 +1,23 @@
 package cc.touchuan.jbus.application;
 
+import org.apache.log4j.Logger;
+
+import cc.touchuan.jbus.common.conf.ZSystemConfig;
+
 /**
  * Hello world!
  *
  */
-public class App 
-{
+public class App {
+
+	static Logger LOG = Logger.getLogger(App.class);
+	
     public static void main( String[] args )
     {
-		int port = 8082;
+		int port = Integer.valueOf(ZSystemConfig.getProperty("listener.tcp.port"));
 		
-		if (args. length != 1) { 
-			System.err.println( "Usage: " + TcServer.class.getSimpleName() + " "); 
-			
-		} else {
-			port = Integer. parseInt(args[0]); // 设置端口值（如果端口参数的格式不正确，则抛出一个NumberFormatException） 
-		}
+		LOG.info("config_path:" + ZSystemConfig.getSystemConfigPath());
+		
 		
 		try {
 			
@@ -23,7 +25,7 @@ public class App
 			
 		} catch (Exception e) {
 			
-			e.printStackTrace();
+			LOG.error("", e);
 			
 		} 
     }

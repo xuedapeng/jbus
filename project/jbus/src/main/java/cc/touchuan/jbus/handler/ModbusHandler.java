@@ -8,6 +8,7 @@ import cc.touchuan.jbus.common.helper.ByteHelper;
 import cc.touchuan.jbus.common.helper.HexHelper;
 import cc.touchuan.jbus.proxy.DeviceProxy;
 import cc.touchuan.jbus.proxy.DeviceProxyManager;
+import cc.touchuan.jbus.session.SessionManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -37,8 +38,23 @@ public class ModbusHandler extends ChannelInboundHandlerAdapter {
 		String sessionId = ctx.channel().attr(Keys.SESSION_ID_KEY).get();
 		DeviceProxy proxy = DeviceProxyManager.findProxy(sessionId);
 		proxy.sendData(data);
-		
 	} 
+	
+
+	@Override 
+	public void channelReadComplete(ChannelHandlerContext ctx) { 
+
+	} 
+	
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) {
+
+		logger.info("channelInactive. sessionId=" + ctx.channel().attr(Keys.SESSION_ID_KEY));
+		
+		// 释放资源
+		SessionManager.closeSession(ctx.channel().attr(Keys.SESSION_ID_KEY).get());
+	}
+	
 	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {

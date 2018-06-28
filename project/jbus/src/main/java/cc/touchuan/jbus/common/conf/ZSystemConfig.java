@@ -83,9 +83,9 @@ public class ZSystemConfig implements IConfig{
         	  throw new JbusException(e);
           }
 
-       if (filePath.endsWith(".jar"))
-
+       if (filePath.endsWith(".jar")) {
           filePath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
+       }
 
        java.io.File file = new java.io.File(filePath);
 
