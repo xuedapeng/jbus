@@ -1,5 +1,8 @@
 package cc.touchuan.jbus.common.exception;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 public class JbusException extends RuntimeException {
 
 	public JbusException(Throwable cause) {
@@ -10,6 +13,14 @@ public class JbusException extends RuntimeException {
 		super(msg);
 	}
 
+
+    public static String trace(Throwable e) {
+    	StringWriter sw = new StringWriter();
+    	PrintWriter pw = new PrintWriter(sw);
+    	e.printStackTrace(pw);
+    	return sw.toString();	
+    }
+	
 	/**
 	 * 
 	 */

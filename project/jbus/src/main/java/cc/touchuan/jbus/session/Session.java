@@ -1,5 +1,7 @@
 package cc.touchuan.jbus.session;
 
+import java.util.Date;
+
 import cc.touchuan.jbus.proxy.ControllerProxy;
 import cc.touchuan.jbus.proxy.DeviceProxy;
 import io.netty.channel.Channel;
@@ -12,6 +14,7 @@ public class Session {
 	private ControllerProxy controllerProxy;
 	private String host;
 	private int port;
+	private Date startTime;
 
 	public String getSessionId() {
 		return sessionId;
@@ -60,5 +63,15 @@ public class Session {
 	public void setPort(int port) {
 		this.port = port;
 	}
+
+	public Date getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(Date startTime) {
+		this.startTime = startTime;
+	}
+	
+	
 	
 }

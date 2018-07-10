@@ -1,6 +1,6 @@
 package cc.touchuan.jbus.auth;
 
-public class DeviceAuth {
+public class DeviceAuthProxy {
 
 	// id/token 验证
 	public static boolean checkToken(String deviceId, String accessToken) {

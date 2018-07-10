@@ -1,9 +1,12 @@
 package cc.touchuan.jbus.session;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.log4j.Logger;
 
 import cc.touchuan.jbus.common.constant.Keys;
 import cc.touchuan.jbus.common.exception.JbusException;
@@ -13,11 +16,20 @@ import io.netty.channel.Channel;
 
 public class SessionManager {
 
+	static Logger logger = Logger.getLogger(SessionManager.class);
+
+	static final long IDLE_SLEEP = 10*1000;// 休眠10秒；
+	
 	// sessionId, session
 	static Map<String, Session> _sessionMap = new ConcurrentHashMap<String, Session>();
 	
 	// deviceId, List<session>
 	static Map<String, List<Session>> _device2SessionMap = new ConcurrentHashMap<String, List<Session>>();
+	
+
+	public static void initialize() {
+		checkLostTask();
+	}
 	
 	public static Session findBySessionId(String sessionId) {
 		
@@ -61,6 +73,7 @@ public class SessionManager {
 		session.setChannel(channel);
 		session.setHost(host);
 		session.setPort(port);
+		session.setStartTime(new Date());
 		
 		_sessionMap.put(sessionId, session);
 		
@@ -100,6 +113,63 @@ public class SessionManager {
 	private static String makeSessionId() {
 		
 		return CryptoHelper.genUUID();
+	}
+	
+
+	// 断开死连接
+	private static void checkLostTask() {
+		
+		new Thread() {
+
+			@Override  
+			public void run() {
+				
+				while(true) {
+
+					List<Session> inactiveSessionList = new ArrayList<Session>();
+					_sessionMap.forEach((K,V)->{
+						if (!V.getChannel().isActive()) {
+							inactiveSessionList.add(V);
+						}
+					});
+					
+					if (inactiveSessionList.size() > 0) {
+						inactiveSessionList.forEach((E)->{
+							closeSession(E.getSessionId());
+						});
+					}
+					
+					try {
+						sleep(IDLE_SLEEP);
+					} catch (InterruptedException e) {
+						logger.error("", e);
+					}
+				}
+			}
+			
+		}.start();
+	}
+	
+
+	/*
+	 * 提供给json-Rpc的接口 
+	 */
+	
+	public static class JsonRpc {
+
+		public static List<Session> getSessionList() {
+			
+			List<Session> retList = new ArrayList<Session>();
+			_sessionMap.forEach((K,V)->{
+				retList.add(V);
+			});
+			
+			return retList;
+		}
+		
+		public static List<String> getDeviceList() {
+			return new ArrayList<String>(_device2SessionMap.keySet());
+		}
 	}
 	
 }

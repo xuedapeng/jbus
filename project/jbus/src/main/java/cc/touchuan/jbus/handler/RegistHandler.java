@@ -5,7 +5,7 @@ import java.net.InetSocketAddress;
 
 import org.apache.log4j.Logger;
 
-import cc.touchuan.jbus.auth.DeviceAuth;
+import cc.touchuan.jbus.auth.DeviceAuthProxy;
 import cc.touchuan.jbus.common.constant.Keys;
 import cc.touchuan.jbus.common.exception.JbusException;
 import cc.touchuan.jbus.common.helper.ByteHelper;
@@ -74,7 +74,7 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 	private REG_STATUS regByAddress(ChannelHandlerContext ctx, String host, int port) {
 
 		// 鉴权
-		if (!DeviceAuth.checkFromAddr(host, port)) {
+		if (!DeviceAuthProxy.checkFromAddr(host, port)) {
 			regError(ctx, host + ":" + String.valueOf(port));
 			return REG_STATUS.FAIL;
 		}
@@ -115,7 +115,7 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 		String accessToken = regInfo.substring(splitIdx+1, regInfo.length()-1);
 		
 		// 鉴权
-		if (!DeviceAuth.checkToken(deviceId, accessToken)) {
+		if (!DeviceAuthProxy.checkToken(deviceId, accessToken)) {
 			regError(ctx, regInfo);
 			return REG_STATUS.FAIL;
 		}

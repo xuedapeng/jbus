@@ -7,7 +7,7 @@ import org.apache.log4j.Logger;
 import cc.touchuan.jbus.handler.ModbusHandler;
 import cc.touchuan.jbus.handler.RegistHandler;
 import cc.touchuan.jbus.mqtt.MqttPool;
-import cc.touchuan.jbus.mqtt.MqttPoolManager;
+import cc.touchuan.jbus.plugin.jsonrpc.handler.JsonRpcHandler;
 import cc.touchuan.jbus.session.SessionManager;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -16,14 +16,19 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpServerCodec;
 
-public class TcServer { 
+/*
+ * Json-Rpc Server
+ */
+public class JrServer { 
 
-	static Logger LOG = Logger.getLogger(TcServer.class);
+	static Logger LOG = Logger.getLogger(JrServer.class);
 	
 	private final int port; 
 	
-	public TcServer( int port) { 
+	public JrServer( int port) { 
 		this. port = port; 
 	} 
 	
@@ -32,21 +37,16 @@ public class TcServer {
 		
 		int port = Integer. parseInt(args[0]); 
 		
-		new TcServer(port).start(); // 调用服务器的start()方法 
+		new JrServer(port).start(); // 调用服务器的start()方法 
 	}
  
 	public void start() throws Exception { 
-
-		// 初始化mqtt pool
-		MqttPoolManager.initialize();
-		// 初始化SessionManager
-		SessionManager.initialize();
 		
 		EventLoopGroup group = new NioEventLoopGroup(); 
 		
 		try { 
 			
-			LOG.info("starting touchuan server...");
+			LOG.info("starting json-rpc server...");
 			LOG.info("listen on port " + port);
 			
 			ServerBootstrap b = new ServerBootstrap(); 
@@ -55,16 +55,18 @@ public class TcServer {
 				.childHandler( 
 					new ChannelInitializer<Channel>(){ 
 					
+						@Override
 						protected void initChannel(Channel ch) throws Exception { 
 							ch.pipeline()
-								.addLast(new RegistHandler())
-								.addLast(new ModbusHandler());
+								.addLast("codec",new HttpServerCodec())
+								.addLast("aggregator",new HttpObjectAggregator(512*1024))
+								.addLast("logic", new JsonRpcHandler());
 						}
 					}); 
 			
 			ChannelFuture f = b.bind().sync(); // ❻ 异步地绑定服务器；调用sync()方法阻塞等待直到绑定完成 
 			
-			LOG.info("touchuan server is running.");
+			LOG.info("json-rpc server is running.");
 			
 			f.channel().closeFuture().sync(); // ❼ 获取Channel的CloseFuture，并且阻塞当前线程直到它完成 
 		

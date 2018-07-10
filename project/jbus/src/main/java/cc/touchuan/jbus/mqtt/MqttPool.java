@@ -24,40 +24,47 @@ public class MqttPool {
 	static Logger logger = Logger.getLogger(MqttPool.class);
 	
 	// deviceId->MqttClient
-	static Map<String, MqttClient> _deviceId2MqttClientMap = new ConcurrentHashMap<String, MqttClient>();
+	 Map<String, MqttClient> _deviceId2MqttClientMap = new ConcurrentHashMap<String, MqttClient>();
 
 	// clientId->deviceCount
-	static Map<String, Integer> _clientId2Count = new ConcurrentHashMap<String, Integer>();
+	 Map<String, Integer> _clientId2Count = new ConcurrentHashMap<String, Integer>();
+
+	// clientId->deviceIdList
+	 Map<String, List<String>> _clientId2DeviceIdMap = new ConcurrentHashMap<String, List<String>>();
 	
 	// clientId->MqttClient
-	static Map<String, MqttClient> _clientId2MqttClient = new ConcurrentHashMap<String, MqttClient>();
+	 Map<String, MqttClient> _clientId2MqttClient = new ConcurrentHashMap<String, MqttClient>();
 	
 	// MqttClient
-	static List<MqttClient> _mqttClientList = new ArrayList<MqttClient>();
+	 List<MqttClient> _mqttClientList = new ArrayList<MqttClient>();
 	
 	// connection lost
-	static List<MqttClient> _mqttClientDisconnectedList = new ArrayList<MqttClient>();
+	 List<MqttClient> _mqttClientDisconnectedList = new ArrayList<MqttClient>();
 	
-	static String BROKER = ZSystemConfig.getProperty("mqtt.broker");
-	static String USERNAME = ZSystemConfig.getProperty("mqtt.auth.account");
-	static String PASSWORD = ZSystemConfig.getProperty("mqtt.auth.password");
+	 private String mqttBroker;
+	 private String mqttUsername;
+	 private String mqttPassword;
 	
-	static int INIT_SIZE = 10;
-	static final long IDLE_SLEEP = 10*1000;// 休眠10秒；
+	 int INIT_SIZE = 10;
+	 final long IDLE_SLEEP = 10*1000;// 休眠10秒；
 	
-	static MqttConnectOptions _connOpts = new MqttConnectOptions(); 
+	 MqttConnectOptions _connOpts = new MqttConnectOptions(); 
 	
 	// 初始创建10个连接
-	public static void initialize() {
+	public  void initialize(String broker, String username, String password) {
+		mqttBroker = broker;
+		mqttUsername = username;
+		mqttPassword = password;
+		
 		initPool();
 		checkLostTask();
 	}
 	
-	private static void initPool() {
+	private  void initPool() {
 
 		_connOpts.setCleanSession(true);  
-		_connOpts.setUserName(USERNAME);  
-		_connOpts.setPassword(PASSWORD.toCharArray());  
+		_connOpts.setUserName(mqttUsername);  
+		_connOpts.setPassword(mqttPassword.toCharArray());  
 		_connOpts.setConnectionTimeout(10);  
 		_connOpts.setKeepAliveInterval(20); 
         
@@ -67,6 +74,7 @@ public class MqttPool {
 					_mqttClientList.add(client);
 					_clientId2MqttClient.put(client.getClientId(), client);
 					_clientId2Count.put(client.getClientId(), 0);
+					_clientId2DeviceIdMap.put(client.getClientId(), new ArrayList<String>());
 					
 					logger.info("MqttClient created. clientId=" + client.getClientId());
 			}
@@ -79,7 +87,7 @@ public class MqttPool {
 	}
 	
 	// 重连线程
-	private static void checkLostTask() {
+	private  void checkLostTask() {
 		
 		new Thread() {
 
@@ -87,14 +95,12 @@ public class MqttPool {
 			public void run() {
 				
 				while(true) {
-
-					logger.info("before: lost.size=" + _mqttClientDisconnectedList.size());
 					
 					if (_mqttClientDisconnectedList.size() > 0) {
 						reconnect();
+						logger.info("_mqttClientDisconnectedList.size=" + _mqttClientDisconnectedList.size());
 					}
 
-					logger.info("after: lost.size=" + _mqttClientDisconnectedList.size());
 					
 					try {
 						sleep(IDLE_SLEEP);
@@ -107,7 +113,7 @@ public class MqttPool {
 		}.start();
 	}
 	
-	private static synchronized void reconnect() {
+	private  synchronized void reconnect() {
 
 		List<MqttClient> successList = new ArrayList<MqttClient>();
 		
@@ -142,7 +148,7 @@ public class MqttPool {
 		
 	}
 	
-	public static MqttClient getInstance(String deviceId) {
+	public  MqttClient getInstance(String deviceId) {
 		
 		// 已存在deviceId
 		if (_deviceId2MqttClientMap.containsKey(deviceId)) {
@@ -156,29 +162,35 @@ public class MqttPool {
 		// 计数
 		counter(instance.getClientId(), 1);
 		
+		// clientId =>  DeviceIds
+		_clientId2DeviceIdMap.get(instance.getClientId()).add(deviceId);
+		
 		return instance;
 		
 	}
 	
-	public static void release(String deviceId) {
+	public  void release(String deviceId) {
 		MqttClient mc = _deviceId2MqttClientMap.remove(deviceId);
 		counter(mc.getClientId(), -1);
 		
+		// clientId =>  DeviceIds
+		_clientId2DeviceIdMap.get(mc.getClientId()).remove(deviceId);
+		
 	}
 	
-	private static void counter(String clientId, int plus) {
+	private  void counter(String clientId, int plus) {
 
 		int count = _clientId2Count.get(clientId);
 		count = count + plus;
 		_clientId2Count.put(clientId, count);
 	}
 	
-	private static MqttClient createMqttClient() throws MqttException {
+	private  MqttClient createMqttClient() throws MqttException {
 		
         MemoryPersistence persistence = new MemoryPersistence();  
         
         
-        MqttClient mqttClient = new MqttClient(BROKER, makeClientId(), persistence);  
+        MqttClient mqttClient = new MqttClient(mqttBroker, makeClientId(), persistence);  
         mqttClient.setCallback(new MqttCallback(){
 
 			@Override
@@ -212,12 +224,12 @@ public class MqttPool {
 	}
 	
 	// 找出负载在平均水平以下的任意一个
-	private static MqttClient whoNotBusy() {
+	private  MqttClient whoNotBusy() {
 		
 		// 平均负载
 		int avg = _deviceId2MqttClientMap.size()/_clientId2MqttClient.size()+1;
 		
-		// 默认取第一个
+		// 默认取第一个(函数式scope内要求final，故使用数组)
 		String[] clientId = {_mqttClientList.get(0).getClientId()};
 		
 		// [java 8 函数式编程] 寻找负载较少的哪个
@@ -234,7 +246,7 @@ public class MqttPool {
 		
 	}
 	
-	private static String makeClientId() {
+	private  String makeClientId() {
 		return CryptoHelper.genUUID();
 	}
 

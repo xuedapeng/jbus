@@ -9,6 +9,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import cc.touchuan.jbus.common.exception.JbusException;
 import cc.touchuan.jbus.common.helper.HexHelper;
 import cc.touchuan.jbus.mqtt.MqttPool;
+import cc.touchuan.jbus.mqtt.MqttPoolManager;
 
 public class MqttProxy {
 
@@ -23,7 +24,12 @@ public class MqttProxy {
 				encodeTopicCmd(deviceId)));
 		
 		try {
-			MqttPool.getInstance(deviceId).subscribe(encodeTopicCmd(deviceId));
+			MqttPoolManager.getMqttPool().getInstance(deviceId).subscribe(encodeTopicCmd(deviceId));
+			
+			if (MqttPoolManager.getMqttPoolLocal() != null) {
+				MqttPoolManager.getMqttPoolLocal().getInstance(deviceId).subscribe(encodeTopicCmd(deviceId));
+			}
+			
 		} catch (MqttException e) {
 			LOG.error("订阅失败", e);
 			throw new JbusException(e);
@@ -36,7 +42,13 @@ public class MqttProxy {
 				encodeTopicCmd(deviceId)));
 		
 		try {
-			MqttPool.getInstance(deviceId).unsubscribe(encodeTopicCmd(deviceId));
+			MqttPoolManager.getMqttPool().getInstance(deviceId).unsubscribe(encodeTopicCmd(deviceId));
+			MqttPoolManager.getMqttPool().release(deviceId);
+			
+			if (MqttPoolManager.getMqttPoolLocal() != null) {
+				MqttPoolManager.getMqttPoolLocal().getInstance(deviceId).unsubscribe(encodeTopicCmd(deviceId));
+				MqttPoolManager.getMqttPoolLocal().release(deviceId);
+			}
 		} catch (MqttException e) {
 			LOG.error("取消订阅失败", e);
 			throw new JbusException(e);
@@ -50,9 +62,15 @@ public class MqttProxy {
 				encodeTopicDat(deviceId), HexHelper.bytesToHexString(data)));
 		
 		try {
-			MqttPool.getInstance(deviceId).publish(
+			MqttPoolManager.getMqttPool().getInstance(deviceId).publish(
 					encodeTopicDat(deviceId), 
 					new MqttMessage(data));
+
+			if (MqttPoolManager.getMqttPoolLocal() != null) {
+				MqttPoolManager.getMqttPoolLocal().getInstance(deviceId).publish(
+						encodeTopicDat(deviceId), 
+						new MqttMessage(data));
+			}
 			
 		} catch (MqttException e) {
 			LOG.error("发布失败", e);
