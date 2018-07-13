@@ -19,6 +19,12 @@ public class GetSessionInfoLogic extends RpcLogic {
 		
 		List<Session> list = SessionManager.JsonRpc.getSessionList();
 		
+		int totalCount = list.size();
+		
+		if(totalCount > 1000) {
+			list = list.subList(0, 1000);
+		}
+		
 		List<Object> resultList = new ArrayList<Object>();
 		
 		list.forEach((E)->{
@@ -41,6 +47,8 @@ public class GetSessionInfoLogic extends RpcLogic {
 		String res = JsonBuilder.build()
 				.add("status", "0")
 				.add("msg", "getSessionInfo ok.")
+				.add("totalCount", totalCount)
+				.add("resultCount", list.size())
 				.add("result", resultList)
 				.toString();
 

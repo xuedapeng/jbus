@@ -90,6 +90,9 @@ public class SessionManager {
 		List<Session> sessionList = _device2SessionMap.get(oldDeviceId);
 		if (sessionList != null) {
 			sessionList.remove(session);
+			if (sessionList.isEmpty()) {
+				_device2SessionMap.remove(oldDeviceId);
+			}
 		}
 		
 		deviceIdCreateEvent(sessionId, newDeviceId);

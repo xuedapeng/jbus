@@ -24,7 +24,6 @@ public class GetMqttInfoLogic extends RpcLogic {
 		list.forEach((client)->{
 			Map<String, Object> map = new HashMap<String, Object>();
 			
-			
 			map.put("mqttId", client.getClientId());
 			map.put("server", client.getServerURI());
 			map.put("isConnected", client.isConnected());

@@ -89,6 +89,8 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 	
 	private REG_STATUS regByToken(ChannelHandlerContext ctx, ByteBuf inReg) {
 
+		logger.info("reginfo=" + inReg.toString(CharsetUtil.UTF_8));
+		
 		// 长度
 		if (inReg.readableBytes() < REG_START.length() ) {
 			return REG_STATUS.IGNORE;
@@ -102,7 +104,10 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 		}
 		
 		// 分隔符、结尾符
-		String regInfo = inReg.toString(CharsetUtil.UTF_8);
+		String regInfo = inReg.toString(CharsetUtil.UTF_8).trim();
+		// 消除回车、换行
+		regInfo = regInfo.replaceAll("[\\n|\\r]", "");
+		
 		int splitIdx = regInfo.indexOf(REG_SPLIT);
 		if ((splitIdx < 1) 
 				|| !regInfo.endsWith(REG_END)) {
@@ -142,12 +147,12 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 	
 	private void regError(ChannelHandlerContext ctx, String regInfo) {
 		
-		String outMsg = String.format("Auth failed, connection refused. data=[%s]", regInfo);
+		String outMsg = String.format("Auth failed, connection refused. data=[%s] ", regInfo);
 		ctx.channel().writeAndFlush(ByteHelper.str2bb(outMsg));
 		ctx.close();
 		
-		// 释放资源
-		SessionManager.closeSession(ctx.channel().attr(Keys.SESSION_ID_KEY).get());
+		// 释放资源(交由 ModbusHandler 释放)
+		// SessionManager.closeSession(ctx.channel().attr(Keys.SESSION_ID_KEY).get());
 	}
 	
 	// host,port

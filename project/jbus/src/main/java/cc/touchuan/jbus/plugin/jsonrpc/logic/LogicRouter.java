@@ -19,17 +19,84 @@ public class LogicRouter {
 		_methodMap.put("getSessionInfo", GetSessionInfoLogic.class);
 		_methodMap.put("getDeviceInfo", GetDeviceInfoLogic.class);
 		_methodMap.put("getMqttInfo", GetMqttInfoLogic.class);
+		_methodMap.put("getDashboard", GetDashboardLogic.class);
+		_methodMap.put("login", LoginLogic.class);
 		
 	}
-	
 	
 	@SuppressWarnings("unchecked")
 	public static String process(String param) {
 		
+		String res = null;
+		try {
+			res = runProcess(param);
+		} catch(Exception e) {
+
+			res = JsonBuilder.build()
+					.add("status", "-1")
+					.add("msg", "未知错误")
+					.toString();
+
+			logger.info("",e);
+		}
+		
+		
+		return res;
+	}
+	
+	private static RpcLogic getLogic(String param) {
+
+		Map<String, Object> paramMap = null;
+		
+		try {
+			paramMap = JsonHelper.json2map(param);
+		} catch(Exception e) {
+			logger.error("", e);
+			return null;
+		}
+		
+		if (!paramMap.containsKey("method")) {
+			return null;
+		}
+		
+		String method = (String)paramMap.get("method");
+		
+		if (!_methodMap.containsKey(method)) {
+			return null;
+		}
+		
+		try {
+			
+			return  _methodMap.get(method).newInstance();
+			
+		} catch (InstantiationException | IllegalAccessException e) {
+			
+			logger.error("", e);
+			return null;
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static String runProcess(String param) throws Exception {
 
 		logger.info(param);
 		
-		if (!validate(param)) {
+		RpcLogic logic = getLogic(param);
+		
+		// methed有效性
+		if (logic == null) {
+			String res = JsonBuilder.build()
+					.add("status", "-3")
+					.add("msg", "method 错误")
+					.toString();
+
+			logger.info(res);
+			
+			return res;
+		}
+		
+		// 参数有效性
+		if (!logic.validate(param)) {
 
 			String res = JsonBuilder.build()
 					.add("status", "-3")
@@ -42,12 +109,8 @@ public class LogicRouter {
 			
 		}
 		
-		Map<String, Object> paramMap = JsonHelper.json2map(param);
-		
-		String appId = ((Map<String, String>)paramMap.get("auth")).get("appId");
-		String appToken = ((Map<String, String>)paramMap.get("auth")).get("appToken");
-		
-		if (!auth(appId, appToken)) {
+		// 鉴权有效性
+		if (!logic.auth(param)) {
 			String res = JsonBuilder.build()
 					.add("status", "-2")
 					.add("msg", "没有权限")
@@ -58,78 +121,16 @@ public class LogicRouter {
 			return res;
 		}
 		
-		
-		String method = (String) paramMap.get("method");
-		if (!_methodMap.keySet().contains(method)) {
-			String res = JsonBuilder.build()
-					.add("status", "-3")
-					.add("msg", "method 错误")
-					.toString();
-
-			logger.info(res);
-			
-			return res;
-		}
-		
+		// 执行
+		Map<String, Object> paramMap = JsonHelper.json2map(param);
 		Map<String, Object> data = (Map<String, Object>)paramMap.get("data");
 		
-		try {
-			RpcLogic logic = (RpcLogic)_methodMap.get(method).newInstance();
-			String res = logic.execute(data);
-
-			logger.info(res);
-			
-			return res;
-			
-
-		} catch (InstantiationException | IllegalAccessException e) {
-			logger.error("", e);
-		}
-		
-		
-		String res = JsonBuilder.build()
-				.add("status", "-1")
-				.add("msg", "未知错误")
-				.toString();
+		String res = logic.execute(data);
 
 		logger.info(res);
 		
 		return res;
-	}
-	
-	private static boolean auth(String appId, String appToken) {
-		return RpcAuthProxy.checkByToken(appId, appToken);
-	}
-	
-	@SuppressWarnings("unchecked")
-	private static boolean validate(String param) {
-
-		Map<String, Object> paramMap = null;
-		
-		try {
-			paramMap = JsonHelper.json2map(param);
-		} catch(Exception e) {
-			logger.error("", e);
-			return false;
-		}
-		
-		if (paramMap.containsKey("method") 
-				&& paramMap.containsKey("data")
-				&& paramMap.containsKey("auth")
-				) {
 			
-			Map<String, String> authMap = (Map<String, String>)paramMap.get("auth");
-			
-			if (authMap.containsKey("appId")
-					&& authMap.containsKey("appToken")) {
-				
-				return true;
-			}
-			
-		}
-		
-		return false;
 	}
-	
 
 }

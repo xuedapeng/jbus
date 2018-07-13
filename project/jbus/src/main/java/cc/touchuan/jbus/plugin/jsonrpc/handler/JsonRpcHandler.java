@@ -1,16 +1,14 @@
 package cc.touchuan.jbus.plugin.jsonrpc.handler;
 
-import java.nio.charset.Charset;
 import java.util.HashMap;
-import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
 import cc.touchuan.jbus.common.exception.JbusException;
 import cc.touchuan.jbus.common.helper.ByteHelper;
 import cc.touchuan.jbus.common.helper.JsonBuilder;
+import cc.touchuan.jbus.plugin.jsonrpc.logic.HttpStaticResource;
 import cc.touchuan.jbus.plugin.jsonrpc.logic.LogicRouter;
-import cc.touchuan.jbus.session.SessionManager;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -27,6 +25,7 @@ import io.netty.util.CharsetUtil;
 public class JsonRpcHandler  extends SimpleChannelInboundHandler<FullHttpRequest>{
 	
 	static final String URI_JSON_RPC = "/jsonrpc";
+	static final String URI_ADMIN = "/admin";
 
 	static Logger logger = Logger.getLogger(JsonRpcHandler.class);
 	
@@ -48,13 +47,17 @@ public class JsonRpcHandler  extends SimpleChannelInboundHandler<FullHttpRequest
 		mRequest = request;
 		
 		String uri = request.uri();
-		
+
+		if (uri.startsWith(URI_ADMIN)) {
+			HttpStaticResource.process(ctx, request);
+			return;
+		}
 		// 校验地址
 		if (!uri.startsWith(URI_JSON_RPC)) {
 			FullHttpResponse res = this.makeResponse(
 					JsonBuilder.build()
 					.add("status", "-1")
-					.add("msg", "无效地址"+uri)
+					.add("msg", "无效地址: "+uri)
 					.toString(),
 					request);
 			

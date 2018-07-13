@@ -74,17 +74,21 @@ public class ZSystemConfig implements IConfig{
     // 默认在jar同级目录下
     private String getDefaultSystemConfigPath() {
     	
-    	  java.net.URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
-          String filePath = null ;
-          try {
-              filePath = java.net.URLDecoder.decode (url.getPath(), "utf-8");
-          } catch (Exception e) {
-        	  logger.error("", e);
-        	  throw new JbusException(e);
-          }
+	  java.net.URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
+      String filePath = null ;
+      try {
+          filePath = java.net.URLDecoder.decode (url.getPath(), "utf-8");
+      } catch (Exception e) {
+    	  logger.error("", e);
+    	  throw new JbusException(e);
+      }
 
        if (filePath.endsWith(".jar")) {
           filePath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
+       } else {
+    	  // class上级目录下
+          filePath = filePath.substring(0, filePath.lastIndexOf("/"));
+          filePath = filePath.substring(0, filePath.lastIndexOf("/")+1);
        }
 
        java.io.File file = new java.io.File(filePath);
