@@ -107,9 +107,9 @@ $(function(){
 		var appToken = localStorage.appToken;
 
 		if (!appId || !appToken) {
-			if (confirm("登录信息已失效，是否转到登录页面？")) {
+			//if (confirm("登录信息已失效，是否转到登录页面？")) {
 				moveToLogin();
-			}
+			//}
 		}
 });
 
@@ -121,9 +121,7 @@ var app = new Vue({
 	},
 	methods:{
 		logout:function(){
-			localStorage.appId = null;
-			localStorage.appToken = null;
-			localStorage.account = null;
+			localStorage.clear();
 			moveToLogin();
 		}
 	}

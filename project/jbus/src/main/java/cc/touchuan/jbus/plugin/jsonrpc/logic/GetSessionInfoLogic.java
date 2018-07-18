@@ -32,7 +32,7 @@ public class GetSessionInfoLogic extends RpcLogic {
 			
 			map.put("sessionId", E.getSessionId());
 			map.put("startTime", 
-					new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(E.getStartTime()));
+					new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(E.getStartTime()));
 			map.put("host", E.getHost());
 			map.put("port", E.getPort());
 			map.put("isActive", E.getChannel().isActive());

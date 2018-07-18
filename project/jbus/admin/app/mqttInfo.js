@@ -31,10 +31,16 @@ function loadData() {
 
       var rowsStr = "";
       var result = response.result;
+      var resultLocal = response.resultLocal;
       var seq = 0;
       for(i in result) {
         seq++;
         rowsStr += createRow(result[i], seq);
+      }
+
+      for(j in resultLocal) {
+        seq++;
+        rowsStr += createRow(resultLocal[j], seq);
       }
 
       $('#table_rows').append(rowsStr);
@@ -53,7 +59,7 @@ function createRow(record, seq) {
   template +=  '<td>#mqttId# </td>';
   template +=  '<td>#server#</td>';
   template +=  '<td>#status#</td>';
-  template +=  '<td align="left">#deivceIds#</td>';
+  template +=  '<td>#deivceIds#</td>';
   template +=  '</tr>';
 
   var rowStr = template;
@@ -62,14 +68,14 @@ function createRow(record, seq) {
   rowStr = rowStr.replace("#server#", record['server']);
   rowStr = rowStr.replace("#status#", record['isConnected']?'connected':'disconnected');
 
-  var deivceIdList = record['deviceIds'];
-  var deivceIds = '';
-  for(item in deivceIdList) {
-    if (deivceIds != '') {
-      deivceIds += '<br/>';
-    }
-    deivceIds += deivceIdList[item];
-  }
+  // var deivceIdList = record['deviceIds'];
+  var deivceIds = record['deviceIds'] + "";
+  // for(item in deivceIdList) {
+  //   if (deivceIds != '') {
+  //     deivceIds += '<br/>';
+  //   }
+  //   deivceIds += deivceIdList[item];
+  // }
 
   rowStr = rowStr.replace("#deivceIds#", deivceIds);
 

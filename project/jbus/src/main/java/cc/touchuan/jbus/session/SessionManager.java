@@ -128,23 +128,29 @@ public class SessionManager {
 			public void run() {
 				
 				while(true) {
-
-					List<Session> inactiveSessionList = new ArrayList<Session>();
-					_sessionMap.forEach((K,V)->{
-						if (!V.getChannel().isActive()) {
-							inactiveSessionList.add(V);
-						}
-					});
-					
-					if (inactiveSessionList.size() > 0) {
-						inactiveSessionList.forEach((E)->{
-							closeSession(E.getSessionId());
-						});
-					}
-					
 					try {
-						sleep(IDLE_SLEEP);
-					} catch (InterruptedException e) {
+						List<Session> inactiveSessionList = new ArrayList<Session>();
+						_sessionMap.forEach((K,V)->{
+							if (!V.getChannel().isActive()) {
+								inactiveSessionList.add(V);
+							}
+						});
+
+						logger.info("_sessionMap.size=" + _sessionMap.size());
+						logger.info("inactiveSessionList.size=" + inactiveSessionList.size());
+						if (inactiveSessionList.size() > 0) {
+							inactiveSessionList.forEach((E)->{
+								closeSession(E.getSessionId());
+								logger.info("closeSession:" + E.getSessionId());
+							});
+						}
+						
+						try {
+							sleep(IDLE_SLEEP);
+						} catch (InterruptedException e) {
+							logger.error("", e);
+						}
+					} catch(Exception e) {
 						logger.error("", e);
 					}
 				}
@@ -160,7 +166,8 @@ public class SessionManager {
 	
 	public static class JsonRpc {
 
-		public static List<Session> getSessionList() {
+		
+		public synchronized static List<Session> getSessionList() {
 			
 			List<Session> retList = new ArrayList<Session>();
 			_sessionMap.forEach((K,V)->{

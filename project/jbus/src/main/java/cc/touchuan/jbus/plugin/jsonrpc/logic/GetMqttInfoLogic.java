@@ -27,7 +27,7 @@ public class GetMqttInfoLogic extends RpcLogic {
 			map.put("mqttId", client.getClientId());
 			map.put("server", client.getServerURI());
 			map.put("isConnected", client.isConnected());
-			map.put("deviceIds", MqttPoolManager.JsonRpc.getDeviceIdsOfMqttClient(client.getClientId()));
+			map.put("deviceIds", MqttPoolManager.JsonRpc.getDeviceIdsOfMqttClient(client.getClientId()).size());
 			resultList.add(map);
 		});
 		
@@ -38,7 +38,7 @@ public class GetMqttInfoLogic extends RpcLogic {
 				map.put("mqttId", client.getClientId());
 				map.put("server", client.getServerURI());
 				map.put("isConnected", client.isConnected());
-				map.put("deviceIds", MqttPoolManager.JsonRpc.getDeviceIdsOfMqttClientLocal(client.getClientId()));
+				map.put("deviceIds", MqttPoolManager.JsonRpc.getDeviceIdsOfMqttClientLocal(client.getClientId()).size());
 				resultListLocal.add(map);
 			});
 		}

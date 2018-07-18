@@ -28,4 +28,8 @@ public class ByteHelper {
 	public static ByteBuf str2bb(String str) {
 		 return Unpooled. copiedBuffer(str, CharsetUtil. UTF_8);
 	}
+	
+	public static byte[] str2bytes(String str) {
+		return str.getBytes(CharsetUtil. UTF_8);
+	}
 }

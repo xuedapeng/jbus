@@ -10,8 +10,8 @@ public class LoginLogic extends RpcLogic {
 
 	static String _expectedAccount = ZSystemConfig.getProperty("admin.account");
 	static String _expectedPassword = ZSystemConfig.getProperty("admin.password");
-	static String _adminAppId = ZSystemConfig.getProperty("admin.jsonrpc.appId");
-	static String _adminAppToken = ZSystemConfig.getProperty("admin.jsonrpc.appToken");
+	public static String _adminAppId = ZSystemConfig.getProperty("admin.jsonrpc.appId");
+	public static String _adminAppToken = ZSystemConfig.getProperty("admin.jsonrpc.appToken");
 	
 	@Override
 	public String execute(Map<String, Object> data) {
