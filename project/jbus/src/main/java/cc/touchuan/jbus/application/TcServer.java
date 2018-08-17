@@ -1,9 +1,11 @@
 package cc.touchuan.jbus.application;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
+import cc.touchuan.jbus.handler.HeartbeatHandler;
 import cc.touchuan.jbus.handler.ModbusHandler;
 import cc.touchuan.jbus.handler.RegistHandler;
 import cc.touchuan.jbus.mqtt.MqttPool;
@@ -16,6 +18,7 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.timeout.IdleStateHandler;
 
 public class TcServer { 
 
@@ -57,6 +60,8 @@ public class TcServer {
 					
 						protected void initChannel(Channel ch) throws Exception { 
 							ch.pipeline()
+								.addLast(new IdleStateHandler(0, 0, 1,TimeUnit.MINUTES))
+								.addLast(new HeartbeatHandler())
 								.addLast(new RegistHandler())
 								.addLast(new ModbusHandler());
 						}

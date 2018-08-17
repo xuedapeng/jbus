@@ -8,15 +8,16 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import cc.touchuan.jbus.common.exception.JbusException;
 import cc.touchuan.jbus.common.helper.HexHelper;
-import cc.touchuan.jbus.mqtt.MqttPool;
 import cc.touchuan.jbus.mqtt.MqttPoolManager;
+import io.netty.util.CharsetUtil;
 
 public class MqttProxy {
 
 	static Logger LOG = Logger.getLogger(MqttProxy.class);
 	
-	static String TOPIC_PREFIX_CMD = "TC/CMD/";
-	static String TOPIC_PREFIX_DAT = "TC/DAT/";
+	public static String TOPIC_PREFIX_CMD = "TC/CMD/";
+	public static String TOPIC_PREFIX_DAT = "TC/DAT/";
+	public static String TOPIC_PREFIX_STS = "TC/STS/";
 	
 	public static void subscribe(String deviceId) {
 
@@ -77,7 +78,28 @@ public class MqttProxy {
 			throw new JbusException(e);
 		}
 	}
-	
+
+	// 发布事件(设备上下线等)
+	public static void publishEvent(String topic, String data) {
+		
+		LOG.info(String.format("publishEvent: %s->%s", topic, data));
+		
+		try {
+			MqttPoolManager.getMqttPool().getInstance().publish(
+					topic, 
+					new MqttMessage(data.getBytes(CharsetUtil.UTF_8)));
+
+			if (MqttPoolManager.getMqttPoolLocal() != null) {
+				MqttPoolManager.getMqttPoolLocal().getInstance().publish(
+						topic, 
+						new MqttMessage(data.getBytes(CharsetUtil.UTF_8)));
+			}
+			
+		} catch (MqttException e) {
+			LOG.error("发布失败", e);
+			throw new JbusException(e);
+		}
+	}
 	// mqtt client 收到推送时调用此方法
 	public static void recieve(String topic, MqttMessage message) {
 		

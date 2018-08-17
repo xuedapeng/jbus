@@ -16,6 +16,7 @@ public class LogicRouter {
 	static Map<String, Class<? extends RpcLogic>> _methodMap = new HashMap<String,Class<? extends RpcLogic>>();
 	
 	static {
+		_methodMap.put("getOnlineInfoOfDevices", GetOnlineInfoOfDevicesLogic.class);
 		_methodMap.put("getSessionInfo", GetSessionInfoLogic.class);
 		_methodMap.put("getDeviceInfo", GetDeviceInfoLogic.class);
 		_methodMap.put("getMqttInfo", GetMqttInfoLogic.class);

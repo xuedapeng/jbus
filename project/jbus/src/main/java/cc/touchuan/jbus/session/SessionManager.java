@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
@@ -55,7 +57,10 @@ public class SessionManager {
 			// 取消订阅
 			MqttProxy.unSubscribe(deviceId);
 		}
-
+		
+		EventManager.publish(
+				new Event(removed, EventManager.EVENT_OFF));
+		
 	}
 	
 	public static Session createSession(Channel channel, String host, int port) {
@@ -168,18 +173,22 @@ public class SessionManager {
 
 		
 		public synchronized static List<Session> getSessionList() {
-			
-			List<Session> retList = new ArrayList<Session>();
-			_sessionMap.forEach((K,V)->{
-				retList.add(V);
-			});
-			
-			return retList;
+			return _sessionMap.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList());
 		}
 		
 		public static List<String> getDeviceList() {
-			return new ArrayList<String>(_device2SessionMap.keySet());
+			return _device2SessionMap.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
 		}
+		
+		// Map<deviceId, on/off>
+		public static Map<String, String> getOnlineStateOfDevices(List<String> deviceIds) {
+			return deviceIds.stream().collect(
+					Collectors.toMap(
+							Function.identity(), 
+							(deviceId)->_device2SessionMap.containsKey(deviceId)?"on":"off"));
+			
+		}
+		
 	}
 	
 }

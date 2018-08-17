@@ -9,8 +9,11 @@ import cc.touchuan.jbus.auth.DeviceAuthProxy;
 import cc.touchuan.jbus.common.constant.Keys;
 import cc.touchuan.jbus.common.exception.JbusException;
 import cc.touchuan.jbus.common.helper.ByteHelper;
+import cc.touchuan.jbus.common.helper.HexHelper;
 import cc.touchuan.jbus.proxy.DeviceProxy;
 import cc.touchuan.jbus.proxy.DeviceProxyManager;
+import cc.touchuan.jbus.session.Event;
+import cc.touchuan.jbus.session.EventManager;
 import cc.touchuan.jbus.session.Session;
 import cc.touchuan.jbus.session.SessionManager;
 import io.netty.buffer.ByteBuf;
@@ -49,6 +52,8 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		
+		logger.info("receive:" + HexHelper.bytesToHexString(ByteHelper.bb2bytes((ByteBuf) msg)));
+		
 		// 以字符 REG 开头的是注册消息
 		ByteBuf in = (ByteBuf) msg; 
 		ByteBuf inReg = in.slice();
@@ -82,6 +87,9 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 		// session,proxy管理
 		Session session = SessionManager.createSession(ctx.channel(), host, port);
 		DeviceProxyManager.createProxy(session.getSessionId(), host, port);
+
+		EventManager.publish(
+				new Event(session, EventManager.EVENT_ON));
 		
 		return REG_STATUS.OK;
 	}
@@ -141,6 +149,9 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 		}
 		
 		proxy.updateDeviceId(deviceId);
+
+		EventManager.publish(
+				new Event(session, EventManager.EVENT_ON));
 		
 		return REG_STATUS.OK;
 	}
