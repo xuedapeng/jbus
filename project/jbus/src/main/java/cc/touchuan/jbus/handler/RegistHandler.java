@@ -2,10 +2,13 @@ package cc.touchuan.jbus.handler;
 
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
+import cc.touchuan.jbus.application.Global;
 import cc.touchuan.jbus.auth.DeviceAuthProxy;
+import cc.touchuan.jbus.auth.db.DeviceTypeEntity;
 import cc.touchuan.jbus.common.constant.Keys;
 import cc.touchuan.jbus.common.exception.JbusException;
 import cc.touchuan.jbus.common.helper.ByteHelper;
@@ -17,18 +20,22 @@ import cc.touchuan.jbus.session.EventManager;
 import cc.touchuan.jbus.session.Session;
 import cc.touchuan.jbus.session.SessionManager;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.CharsetUtil;
+import io.netty.util.ReferenceCountUtil;
+import cc.touchuan.jbus.common.helper.NumericHelper;
 
 @Sharable 
 public class RegistHandler extends ChannelInboundHandlerAdapter {
 
 	static Logger logger = Logger.getLogger(RegistHandler.class);
 	
-	final static String REG_START = "REG:";
+	final static String REG_START = "REG";
 	final static String REG_SPLIT = ",";
 	final static String REG_END = ";";
 	
@@ -56,9 +63,22 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 		
 		// 以字符 REG 开头的是注册消息
 		ByteBuf in = (ByteBuf) msg; 
-		ByteBuf inReg = in.slice();
+		ByteBuf inReg = in.copy();
 		
 		REG_STATUS status = regByToken(ctx, inReg);
+		ReferenceCountUtil.release(inReg);
+		
+		// 第三方协议设备
+		if (status.equals(REG_STATUS.IGNORE)) {
+			byte[] regBytes = ByteHelper.bb2bytes(in);
+			
+			byte[] regTokenBytes = regByFp(ctx, regBytes);
+			
+			if (regTokenBytes != null) {
+				ByteBuf tokenReg = Unpooled.copiedBuffer(regTokenBytes);
+				status = regByToken(ctx, tokenReg);
+			}
+		}
 		
 		// 不是注册消息:下一棒
 		if (status.equals(REG_STATUS.IGNORE)) {
@@ -69,10 +89,20 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 		// 注册成功：删除本handler
 		if (status.equals(REG_STATUS.OK)) {
 			ctx.pipeline().remove(RegistHandler.class);
+
+			// 发给注册响应服务
+			ctx.fireChannelRead(msg);
 			logger.info("remove RegistHandler");
+			return;
 		} else {
 
 			logger.info("status:" + status);
+		}
+
+		// tc 手动释放，ws自动释放
+		if (Global.CHANNEL_TYPE_TC.equals(ctx.channel().attr(Keys.CHANNEL_TYPE_KEY).get())) {
+			logger.info("release in(msg)");
+			ReferenceCountUtil.release(msg);
 		}
  	} 
 
@@ -94,6 +124,19 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 		return REG_STATUS.OK;
 	}
 	
+
+	// 根据数据指纹fingerprint注册
+	private byte[] regByFp(ChannelHandlerContext ctx, byte[] regBytes) {
+		
+		DeviceTypeEntity deviceType = DeviceAuthProxy.findDeviceType(regBytes);
+		if (deviceType == null) {
+			return null;
+		}
+		
+		byte[] regInfoBytes = DeviceAuthProxy.makeRegInfo(regBytes, deviceType);
+		
+		return regInfoBytes;
+	}
 	
 	private REG_STATUS regByToken(ChannelHandlerContext ctx, ByteBuf inReg) {
 
@@ -113,8 +156,8 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 		
 		// 分隔符、结尾符
 		String regInfo = inReg.toString(CharsetUtil.UTF_8).trim();
-		// 消除回车、换行
-		regInfo = regInfo.replaceAll("[\\n|\\r]", "");
+		// 消除回车、换行, 冒号
+		regInfo = regInfo.replaceAll("[\\n|\\r|:]", "");
 		
 		int splitIdx = regInfo.indexOf(REG_SPLIT);
 		if ((splitIdx < 1) 
@@ -124,8 +167,35 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 			return REG_STATUS.ERROR;
 		}
 		
-		String deviceId = regInfo.substring(0, splitIdx);
-		String accessToken = regInfo.substring(splitIdx+1, regInfo.length()-1);
+		// 消除结尾符;
+		regInfo = regInfo.replace(REG_END, "");
+		String[] regInfoArr = regInfo.split(REG_SPLIT);
+//		String deviceId = regInfo.substring(0, splitIdx);
+//		String accessToken = regInfo.substring(splitIdx+1, regInfo.length()-1);
+		String deviceId = regInfoArr[0];
+		String accessToken = regInfoArr[1];
+		
+		// 设置心跳间隔
+		if (regInfoArr.length > 2 
+				&& NumericHelper.isIntegerPositive(regInfoArr[2])
+				) {
+			
+
+			Integer heartBeat = Integer.valueOf(regInfoArr[2]);
+			if (heartBeat > Global.HEART_BEAT_MAX) {
+				heartBeat = Global.HEART_BEAT_TEN_MINUTES; // 超过24小时，修正为10分钟
+			}
+			
+			if (heartBeat != Global.HEART_BEAT_DEFAULT ) {
+				
+				ctx.pipeline().remove(IdleStateHandler.class); // 删除默认10秒
+				
+//				if (heartBeat <= Global.HEART_BEAT_MAX) { // 超过24小时，不发送心跳
+					ctx.pipeline().addFirst(
+							new IdleStateHandler(0, 0, heartBeat*10,TimeUnit.SECONDS));
+//				}
+			}
+		}
 		
 		// 鉴权
 		if (!DeviceAuthProxy.checkToken(deviceId, accessToken)) {

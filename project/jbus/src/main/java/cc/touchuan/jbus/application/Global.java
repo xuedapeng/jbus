@@ -22,5 +22,18 @@ public class Global {
 		}
 	}
 	
+	// 心跳设置
+	public static final Integer HEART_BEAT_DEFAULT = 1; // 10秒
+	public static final Integer HEART_BEAT_TEN_MINUTES = 60; // 600秒
+	public static final Integer HEART_BEAT_MAX = 8640; // 24小时
+	public static final Integer HEART_BEAT_NONE = 8641; // 24小时+
+	
+	// 服务类型
+
+	public static final String CHANNEL_TYPE_TC = "tc"; 
+	public static final String CHANNEL_TYPE_WS = "ws"; 
+	public static final String CHANNEL_TYPE_HTTP = "http"; 
+	
+	
 
 }

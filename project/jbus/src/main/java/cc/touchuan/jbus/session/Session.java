@@ -8,6 +8,8 @@ import io.netty.channel.Channel;
 
 public class Session {
 
+	public enum PROT_TYPE {TCP_BIN, WS_TXT, WS_BIN};
+	
 	private String sessionId;
 	private Channel channel;
 	private DeviceProxy deviceProxy;
@@ -15,7 +17,8 @@ public class Session {
 	private String host;
 	private int port;
 	private Date startTime;
-
+	private PROT_TYPE protType;
+	
 	public String getSessionId() {
 		return sessionId;
 	}
@@ -70,6 +73,14 @@ public class Session {
 
 	public void setStartTime(Date startTime) {
 		this.startTime = startTime;
+	}
+
+	public PROT_TYPE getProtType() {
+		return protType;
+	}
+
+	public void setProtType(PROT_TYPE protType) {
+		this.protType = protType;
 	}
 	
 	

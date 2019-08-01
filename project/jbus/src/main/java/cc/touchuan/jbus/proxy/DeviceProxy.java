@@ -5,8 +5,13 @@ import org.apache.log4j.Logger;
 import cc.touchuan.jbus.common.helper.ByteHelper;
 import cc.touchuan.jbus.common.helper.HexHelper;
 import cc.touchuan.jbus.session.Session;
+import cc.touchuan.jbus.session.Session.PROT_TYPE;
 import cc.touchuan.jbus.session.SessionManager;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 
 public class DeviceProxy {
 
@@ -72,7 +77,29 @@ public class DeviceProxy {
 		Channel channel = session.getChannel();
 		
 		logger.info("channel.isWritable=" + channel.isWritable());
-		channel.writeAndFlush(ByteHelper.bytes2bb(command));
+		
+		ByteBuf bb = ByteHelper.bytes2bb(command);
+		if (PROT_TYPE.WS_BIN.equals(session.getProtType())) {
+
+			BinaryWebSocketFrame msg = new BinaryWebSocketFrame(bb);
+			channel.writeAndFlush(msg);
+//			logger.info("BinaryWebSocketFrame=" + msg.content()); // 引用计数异常
+			
+		} else if (PROT_TYPE.WS_TXT.equals(session.getProtType())) {
+			
+			TextWebSocketFrame msg = new TextWebSocketFrame(bb);
+			channel.writeAndFlush(msg);
+//			logger.info("TextWebSocketFrame=" + msg.content());  // 引用计数异常
+			
+		} else {
+			
+			channel.writeAndFlush(bb)
+				.addListener(
+					ChannelFutureListener.CLOSE_ON_FAILURE);
+			
+		}
+		
+		
 	}
 
 	public String getDeviceId() {
@@ -82,7 +109,8 @@ public class DeviceProxy {
 	private static String makeDeviceId(String host, int port) {
 		
 		StringBuffer sb = new StringBuffer();
-		
+
+		sb.append("NOSN/");
 		sb.append(host.replace(".", "_"));
 		sb.append("__");
 		sb.append(port);

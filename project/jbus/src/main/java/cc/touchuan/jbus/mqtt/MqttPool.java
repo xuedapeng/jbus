@@ -46,7 +46,7 @@ public class MqttPool {
 	 private String mqttPassword;
 	
 	 int INIT_SIZE = 10;
-	 final long IDLE_SLEEP = 10*1000;// 休眠10秒；
+	 final long IDLE_SLEEP = 10*1000;// 休眠10秒；	
 	
 	 MqttConnectOptions _connOpts = new MqttConnectOptions(); 
 	
@@ -67,6 +67,7 @@ public class MqttPool {
 		_connOpts.setPassword(mqttPassword.toCharArray());  
 		_connOpts.setConnectionTimeout(10);  
 		_connOpts.setKeepAliveInterval(20); 
+		_connOpts.setAutomaticReconnect(false);
         
 		try {
 			for (int i=0; i<INIT_SIZE; i++ ) {
@@ -122,6 +123,7 @@ public class MqttPool {
 			try {
 				if (!E.isConnected()) {
 					E.connect(_connOpts);
+					MqttProxy.doAfterReconnect();
 					logger.info("reconnected. client=" + E.getClientId());
 				}
 				successList.add(E);

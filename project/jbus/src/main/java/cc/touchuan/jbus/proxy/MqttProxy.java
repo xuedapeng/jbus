@@ -9,6 +9,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import cc.touchuan.jbus.common.exception.JbusException;
 import cc.touchuan.jbus.common.helper.HexHelper;
 import cc.touchuan.jbus.mqtt.MqttPoolManager;
+import cc.touchuan.jbus.session.SessionManager;
 import io.netty.util.CharsetUtil;
 
 public class MqttProxy {
@@ -35,6 +36,13 @@ public class MqttProxy {
 			LOG.error("订阅失败", e);
 			throw new JbusException(e);
 		}
+	}
+	
+	public static void doAfterReconnect() {
+		SessionManager.streamOfDevice2SessionMapEntrySet().forEach(E -> {
+			String deviceSn = E.getKey();
+			subscribe(deviceSn);
+		});
 	}
 	
 	public static void unSubscribe(String deviceId) {

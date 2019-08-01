@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.log4j.Logger;
 
+import cc.touchuan.jbus.application.Global;
 import cc.touchuan.jbus.common.constant.Keys;
 import cc.touchuan.jbus.common.exception.JbusException;
 import cc.touchuan.jbus.common.helper.CryptoHelper;
@@ -28,6 +31,12 @@ public class SessionManager {
 	// deviceId, List<session>
 	static Map<String, List<Session>> _device2SessionMap = new ConcurrentHashMap<String, List<Session>>();
 	
+	public static Stream<Entry<String, List<Session>>> streamOfDevice2SessionMapEntrySet() {
+		return _device2SessionMap.entrySet().stream();
+	}
+	public static Stream<Entry<String, Session>> streamOfSessionMapEntrySet() {
+		return _sessionMap.entrySet().stream();
+	}
 
 	public static void initialize() {
 		checkLostTask();

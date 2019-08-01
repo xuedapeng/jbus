@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 
 import org.apache.log4j.Logger;
 
+import cc.touchuan.jbus.common.constant.Keys;
 import cc.touchuan.jbus.handler.ModbusHandler;
 import cc.touchuan.jbus.handler.RegistHandler;
 import cc.touchuan.jbus.mqtt.MqttPool;
@@ -61,6 +62,9 @@ public class JrServer {
 								.addLast("codec",new HttpServerCodec())
 								.addLast("aggregator",new HttpObjectAggregator(512*1024))
 								.addLast("logic", new JsonRpcHandler());
+							
+
+							ch.attr(Keys.CHANNEL_TYPE_KEY).set(Global.CHANNEL_TYPE_HTTP);
 						}
 					}); 
 			

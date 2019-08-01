@@ -3,6 +3,7 @@ package cc.touchuan.jbus.handler;
 
 import org.apache.log4j.Logger;
 
+import cc.touchuan.jbus.application.Global;
 import cc.touchuan.jbus.common.constant.Keys;
 import cc.touchuan.jbus.common.helper.ByteHelper;
 import cc.touchuan.jbus.common.helper.HexHelper;
@@ -14,6 +15,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.util.ReferenceCountUtil;
 
 @Sharable 
 public class ModbusHandler extends ChannelInboundHandlerAdapter {
@@ -38,6 +40,14 @@ public class ModbusHandler extends ChannelInboundHandlerAdapter {
 		String sessionId = ctx.channel().attr(Keys.SESSION_ID_KEY).get();
 		DeviceProxy proxy = DeviceProxyManager.findProxy(sessionId);
 		proxy.sendData(data);
+
+		logger.info("in.refCnt=" + in.refCnt());
+		
+		// tc 手动释放，ws自动释放
+		if (Global.CHANNEL_TYPE_TC.equals(ctx.channel().attr(Keys.CHANNEL_TYPE_KEY).get())) {
+			logger.info("release in(msg)");
+			ReferenceCountUtil.release(in);
+		}
 	} 
 	
 
@@ -62,7 +72,7 @@ public class ModbusHandler extends ChannelInboundHandlerAdapter {
 		ctx.writeAndFlush("unknown error.");
 		ctx.close();
 		
-		logger.info("", cause);
+		logger.error("", cause);
 	}
 
 }

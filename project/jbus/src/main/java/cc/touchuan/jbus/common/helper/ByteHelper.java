@@ -3,6 +3,7 @@ package cc.touchuan.jbus.common.helper;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.CharsetUtil;
+import io.netty.util.ReferenceCountUtil;
 
 public class ByteHelper {
 
@@ -14,8 +15,14 @@ public class ByteHelper {
 		byte[] bytes = new byte[copy.readableBytes()];
 		
 		copy.readBytes(bytes);
-		
+
+		ReferenceCountUtil.release(copy);
 		return bytes;
+	}
+	
+	public static int toUnsignedInt(byte b) {
+		return  (int) (b & 0xff);
+
 	}
 	
 	public static ByteBuf bytes2bb(byte[] b) {
