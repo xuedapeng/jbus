@@ -165,7 +165,7 @@ public class SessionManager {
 							logger.error("", e);
 						}
 					} catch(Exception e) {
-						logger.error("", e);
+						logger.error(JbusException.trace(e), e);
 					}
 				}
 			}

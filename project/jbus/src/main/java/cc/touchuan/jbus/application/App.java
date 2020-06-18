@@ -3,6 +3,7 @@ package cc.touchuan.jbus.application;
 import org.apache.log4j.Logger;
 
 import cc.touchuan.jbus.common.conf.ZSystemConfig;
+import cc.touchuan.jbus.common.exception.JbusException;
 import cc.touchuan.jbus.mqtt.MqttPoolManager;
 import cc.touchuan.jbus.plugin.loadtestor.LoadTestor;
 import cc.touchuan.jbus.session.SessionManager;
@@ -41,7 +42,7 @@ public class App {
 					new TcServer(portTcp).start();
 				} catch (Exception e) {
 
-					LOG.error("", e);
+					LOG.error(JbusException.trace(e), e);
 				}
 			}
 			
@@ -56,7 +57,7 @@ public class App {
 					new WsServer(portWs).start();
 				} catch (Exception e) {
 
-					LOG.error("", e);
+					LOG.error(JbusException.trace(e), e);
 				}
 			}
 			
@@ -71,7 +72,7 @@ public class App {
 					new JrServer(portRpc).start();
 				} catch (Exception e) {
 
-					LOG.error("", e);
+					LOG.error(JbusException.trace(e), e);
 				}
 			}
 			

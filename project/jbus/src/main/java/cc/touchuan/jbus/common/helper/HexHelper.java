@@ -8,7 +8,7 @@ public class HexHelper {
      * @param src byte[] data
      * @return hex string
      */
-    public static String bytesToHexString(byte[] src) {
+    public static String bytesToHexString(byte[] src, String split) {
     	
         StringBuilder stringBuilder = new StringBuilder("");
         if (src == null || src.length <= 0) {
@@ -21,8 +21,19 @@ public class HexHelper {
                 stringBuilder.append(0);
             }
             stringBuilder.append(hv);
-            stringBuilder.append(" ");
+            stringBuilder.append(split);
         }
         return stringBuilder.toString();
+    }
+
+	/**
+     * Convert byte[] to hex string
+     *
+     * @param src byte[] data
+     * @return hex string
+     */
+    public static String bytesToHexString(byte[] src) {
+    	
+        return bytesToHexString(src," "); // 默认空格分割
     }
 }

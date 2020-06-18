@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 
 import cc.touchuan.jbus.application.Global;
 import cc.touchuan.jbus.common.constant.Keys;
+import cc.touchuan.jbus.common.exception.JbusException;
 import cc.touchuan.jbus.common.helper.ByteHelper;
 import cc.touchuan.jbus.common.helper.HexHelper;
 import cc.touchuan.jbus.proxy.DeviceProxy;
@@ -72,7 +73,7 @@ public class ModbusHandler extends ChannelInboundHandlerAdapter {
 		ctx.writeAndFlush("unknown error.");
 		ctx.close();
 		
-		logger.error("", cause);
+		logger.error(JbusException.trace(cause), cause);
 	}
 
 }

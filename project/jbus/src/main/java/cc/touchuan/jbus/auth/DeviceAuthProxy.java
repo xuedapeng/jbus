@@ -13,6 +13,7 @@ import cc.touchuan.jbus.auth.db.DeviceEntity;
 import cc.touchuan.jbus.auth.db.DeviceTypeDao;
 import cc.touchuan.jbus.auth.db.DeviceTypeEntity;
 import cc.touchuan.jbus.common.helper.ByteHelper;
+import cc.touchuan.jbus.common.helper.HexHelper;
 import cc.touchuan.jbus.common.helper.JsonHelper;
 import io.netty.util.CharsetUtil;
 
@@ -38,7 +39,6 @@ public class DeviceAuthProxy {
 		return false;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public static byte[] makeRegInfo(byte[] regBytes, DeviceTypeEntity deviceType) {
 		
 		String aliasRule = deviceType.getAliasRule();
@@ -66,7 +66,14 @@ public class DeviceAuthProxy {
 		
 		DeviceEntity device = findDeviceByAlias(alias);
 		if (device == null) {
-			return null;
+			
+			// 尝试二进制字符串 0x6409100472
+			alias = "0x"+ HexHelper.bytesToHexString(aliasBytes,"");
+			device = findDeviceByAlias(alias);
+			
+			if (device == null) {
+				return null;
+			}
 		}
 		
 		String deviceSn = device.getDeviceSn();

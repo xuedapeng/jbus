@@ -59,7 +59,9 @@ public class RegistHandler extends ChannelInboundHandlerAdapter {
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		
-		logger.info("receive:" + HexHelper.bytesToHexString(ByteHelper.bb2bytes((ByteBuf) msg)));
+		logger.info(String.format("receive:%s,%s", 
+				SessionManager.findBySessionId(ctx.channel().attr(Keys.SESSION_ID_KEY).get()).getDeviceProxy().getDeviceId(),
+				HexHelper.bytesToHexString(ByteHelper.bb2bytes((ByteBuf) msg))));
 		
 		// 以字符 REG 开头的是注册消息
 		ByteBuf in = (ByteBuf) msg; 

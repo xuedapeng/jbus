@@ -59,7 +59,7 @@ public class MqttProxy {
 				MqttPoolManager.getMqttPoolLocal().release(deviceId);
 			}
 		} catch (MqttException e) {
-			LOG.error("取消订阅失败", e);
+			LOG.error("取消订阅失败"+JbusException.trace(e), e);
 			throw new JbusException(e);
 		}
 	}
@@ -82,7 +82,7 @@ public class MqttProxy {
 			}
 			
 		} catch (MqttException e) {
-			LOG.error("发布失败", e);
+			LOG.error("发布失败"+JbusException.trace(e), e);
 			throw new JbusException(e);
 		}
 	}
@@ -104,7 +104,7 @@ public class MqttProxy {
 			}
 			
 		} catch (MqttException e) {
-			LOG.error("发布失败", e);
+			LOG.error("发布失败"+JbusException.trace(e), e);
 			throw new JbusException(e);
 		}
 	}

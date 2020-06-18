@@ -106,7 +106,7 @@ public class MqttPool {
 					try {
 						sleep(IDLE_SLEEP);
 					} catch (InterruptedException e) {
-						logger.error("", e);
+						logger.error(JbusException.trace(e), e);
 					}
 				}
 			}
@@ -128,7 +128,7 @@ public class MqttPool {
 				}
 				successList.add(E);
 			} catch (MqttException e) {
-				logger.error("", e);
+				logger.error(JbusException.trace(e), e);
 			}
 		});
 		
