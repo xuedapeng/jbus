@@ -87,6 +87,10 @@ public class MqttPool {
 		}
 	}
 	
+	private void replaceLostClient(MqttClient lostClient) {
+		
+	}
+	
 	// 重连线程
 	private  void checkLostTask() {
 		
@@ -97,7 +101,7 @@ public class MqttPool {
 				
 				while(true) {
 					
-					if (_mqttClientDisconnectedList.size() > 0) {
+					if (hasLostConnections()) {
 						reconnect();
 						logger.info("_mqttClientDisconnectedList.size=" + _mqttClientDisconnectedList.size());
 					}
@@ -121,35 +125,49 @@ public class MqttPool {
 		// 重连接
 		_mqttClientDisconnectedList.forEach((E)->{
 			try {
-				if (!E.isConnected()) {
+
+				if(!E.isConnected()) {
 					E.connect(_connOpts);
+					// 重新订阅
 					MqttProxy.doAfterReconnect();
 					logger.info("reconnected. client=" + E.getClientId());
 				}
-				successList.add(E);
+				
+//				successList.add(E);
 			} catch (MqttException e) {
-				logger.error(JbusException.trace(e), e);
+				logger.error("", e);
 			}
 		});
 		
 		// 从失连列表中删除重连成功的对象
-		successList.forEach((E)->{
-			_mqttClientDisconnectedList.remove(E);
-		});
+//		successList.forEach((E)->{
+//			_mqttClientDisconnectedList.remove(E);
+//		});
 		
-		// 全面检查
-		_mqttClientList.forEach((E)->{
-
-			if (!E.isConnected()) {
-				if (!_mqttClientDisconnectedList.contains(E)) {
-					_mqttClientDisconnectedList.add(E);
-				}
-			}
-		});
+		_mqttClientDisconnectedList.clear();
 
 		
 	}
 
+
+	private boolean hasLostConnections() {
+
+		// 全面检查
+		_mqttClientList.forEach((E)->{
+
+			if (!checkConnectionStatus(E)) {
+				_mqttClientDisconnectedList.add(E);
+			}
+		});
+		
+		if (_mqttClientDisconnectedList.size() > 0) {
+			return true;
+		} else {
+			return false;
+		}
+
+	}
+	
 	public  MqttClient getInstance() {
 		return whoNotBusy();
 	}
@@ -256,4 +274,14 @@ public class MqttPool {
 		return CryptoHelper.genUUID();
 	}
 
+	private boolean checkConnectionStatus(MqttClient mqttClient) {
+		try {
+			mqttClient.publish("TC/HEART_BEAT/JBUS", new MqttMessage(new byte[]{0x00}));
+			logger.info("HEART_BEAT 发布成功。" + mqttClient.getClientId());
+			return true;
+		} catch (MqttException e) {
+			logger.info("HEART_BEAT 发布失败。" + mqttClient.getClientId());
+			return false;
+		}
+	}
 }

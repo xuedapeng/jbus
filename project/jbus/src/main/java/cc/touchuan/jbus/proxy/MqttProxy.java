@@ -34,7 +34,7 @@ public class MqttProxy {
 			
 		} catch (MqttException e) {
 			LOG.error("订阅失败", e);
-			throw new JbusException(e);
+//			throw new JbusException(e);
 		}
 	}
 	
@@ -60,7 +60,7 @@ public class MqttProxy {
 			}
 		} catch (MqttException e) {
 			LOG.error("取消订阅失败"+JbusException.trace(e), e);
-			throw new JbusException(e);
+//			throw new JbusException(e);
 		}
 	}
 	
@@ -83,7 +83,7 @@ public class MqttProxy {
 			
 		} catch (MqttException e) {
 			LOG.error("发布失败"+JbusException.trace(e), e);
-			throw new JbusException(e);
+//			throw new JbusException(e);
 		}
 	}
 
@@ -105,7 +105,7 @@ public class MqttProxy {
 			
 		} catch (MqttException e) {
 			LOG.error("发布失败"+JbusException.trace(e), e);
-			throw new JbusException(e);
+//			throw new JbusException(e);
 		}
 	}
 	// mqtt client 收到推送时调用此方法
